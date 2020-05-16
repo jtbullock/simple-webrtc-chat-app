@@ -1,16 +1,16 @@
-import config from '../config';
+import {rtcPeerConnectionConfig} from '../config';
 
 export default class RTCHostService {
 
     constructor(signallingService, inviteeName)
     {
         if(!signallingService) {
-            throw 'RTCHostService: Missing required parameter \'signallingService\'';
+            throw new Error('RTCHostService: Missing required parameter \'signallingService\'');
         }
 
         if(inviteeName == null || inviteeName.trim() === '')
         {
-            throw 'RTCHostService: Missing required parameter \'inviteeName\'';
+            throw new Error('RTCHostService: Missing required parameter \'inviteeName\'');
         }
 
         this.signallingService = signallingService;
@@ -22,7 +22,7 @@ export default class RTCHostService {
 
     constructPeerConnection()
     {
-        this.rtcPeerConnection = new RTCPeerConnection(config.rtcPeerConnectionConfig);
+        this.rtcPeerConnection = new RTCPeerConnection(rtcPeerConnectionConfig);
 
         this.rtcPeerConnection.onicecandidate = event => {
             if(event.candidate)
@@ -36,7 +36,6 @@ export default class RTCHostService {
         this.rtcChannel.onclose = e => this.channelState = e.readyState;
     }
 
-
     beginConnect()
     {
         this.signallingService.createOffer()
@@ -46,7 +45,7 @@ export default class RTCHostService {
                 this.signallingService.registerRtcService(this.inviteeName, this);
                 this.signallingService.sendOffer(this.inviteeName, this.signallingService.localDescription);
             })
-            .catch(() => { throw 'Error sending offer to remote user.' });
+            .catch(() => { throw new Error('Error sending offer to remote user.') });
     }
 
 

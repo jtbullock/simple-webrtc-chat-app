@@ -1,9 +1,33 @@
-export default class SignallingService {
+import {socketServerUri as cSocketServerUri} from '../config';
 
-    constructor(socketUri)
+let isConnected = false;
+
+class SignallingService {
+
+    constructor(socketServerUri = cSocketServerUri)
     {
-        this.socketUri = socketUri;
-        this.webSocket = new WebSocket(this.socketUri);
+        this.isLoggedIn = false;
+        this.socketServerUri = socketServerUri;
+        
+        // Subscribers
+        this.rtcServices = {};
+
+        // Events
+        this.onLogin = () => {};
+        this.onOpen = () => {};
+        this.onOffer = () => {};
+
+        this.setupWebSocket();
+    }
+
+    setupWebSocket()
+    {
+        this.webSocket = new WebSocket(this.socketServerUri);
+
+        this.webSocket.onopen = () => {
+            isConnected = true;
+            this.onOpen();
+        };
 
         this.webSocket.onmessage = message => {
             this.onMessage(JSON.parse(message.data));
@@ -12,10 +36,6 @@ export default class SignallingService {
         this.webSocket.onclose = () => {
             this.webSocket.close();
         };
-
-        this.rtcServices = {};
-
-        this.onLogin = () => {};
     }
 
     registerRtcService(name, service)
@@ -27,11 +47,12 @@ export default class SignallingService {
     {
         switch(message.type) {
             case "login":
+                this.isLoggedIn = true;
                 this.onLogin(message);
                 break;
-            // case "offer":
-            //     onOffer(message);
-            //     break;
+            case "offer":
+                this.onOffer(message);
+                break;
             // case "answer":
             //     onAnswer(message);
             //     break;
@@ -56,6 +77,16 @@ export default class SignallingService {
     }
 
     login(name) {
+        if(this.isLoggedIn)
+        {
+            throw new Error("User is already logged in.");
+        }
+
         this.send({type: "login", name});
     }
 }
+
+export default {
+    instance: new SignallingService(),
+    isConnected
+};

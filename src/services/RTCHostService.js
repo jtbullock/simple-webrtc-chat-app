@@ -2,19 +2,21 @@ import {rtcPeerConnectionConfig} from '../config';
 
 export default class RTCHostService {
 
-    constructor(signallingService, inviteeName)
+    constructor(signallingService, name)
     {
         if(!signallingService) {
             throw new Error('RTCHostService: Missing required parameter \'signallingService\'');
         }
 
-        if(inviteeName == null || inviteeName.trim() === '')
+        if(name == null || name.trim() === '')
         {
-            throw new Error('RTCHostService: Missing required parameter \'inviteeName\'');
+            throw new Error('RTCHostService: Missing required parameter \'name\'');
         }
 
         this.signallingService = signallingService;
-        this.inviteeName = inviteeName;
+        this.signallingService.registerRtcService(this.localName, this);
+
+        this.localName = name;
         this.channelState = "closed";
 
         this.constructPeerConnection();
@@ -36,13 +38,14 @@ export default class RTCHostService {
         this.rtcChannel.onclose = e => this.channelState = e.readyState;
     }
 
-    beginConnect()
+    beginConnect(inviteeName)
     {
+        this.inviteeName = inviteeName;
+
         this.rtcPeerConnection.createOffer()
             .then(offer => this.rtcPeerConnection.setLocalDescription(offer))
             .then(() => {
                 // TODO if fail, unregister?
-                this.signallingService.registerRtcService(this.inviteeName, this);
                 this.signallingService.sendOffer(this.inviteeName, this.rtcPeerConnection.localDescription);
             })
             .catch(e => { 
@@ -51,6 +54,13 @@ export default class RTCHostService {
             });
     }
 
+    acceptAnswer(answer)
+    {
+        this.signallingService.setRemoteDescription(answer);
+    }
 
-
+    addCandidate(candidate) {
+        console.log("Adding candidate.");
+        this.rtcPeerConnection.addIceCandidate(candidate);
+    };
 }

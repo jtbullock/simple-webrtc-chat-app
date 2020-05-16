@@ -53,12 +53,12 @@ class SignallingService {
             case "offer":
                 this.onOffer(message);
                 break;
-            // case "answer":
-            //     onAnswer(message);
-            //     break;
-            // case "candidate":
-            //     onCandidate(message);
-            //     break;
+            case "answer":
+                this.handleAnswer(message);
+                break;
+            case "candidate":
+                this.handleCandidate(message);
+                break;
             default:
                 break;
         }
@@ -74,6 +74,18 @@ class SignallingService {
 
     sendCandidate(name, candidate) {
         this.send({type: "candidate", name, candidate});
+    }
+
+    sendAnswer(name, answer) {
+        this.send({type: 'answer', answer, name});
+    }
+
+    handleAnswer(message) {
+        this.rtcServices[message.name].acceptAnswer(message.answer);
+    }
+
+    handleCandidate(message) {
+        this.rtcServices[message.name].addCandidate(message.candidate);
     }
 
     login(name) {

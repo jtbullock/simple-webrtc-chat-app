@@ -2,6 +2,7 @@ import React, {useState, useRef, useEffect} from 'react';
 import './App.css';
 import SignallingService from './services/SignallingService';
 import RTCHostService from './services/RTCHostService';
+import RTCInviteeService from './services/RTCInviteeService';
 
 const states = {
   NOT_LOGGED_IN: 'NOT_LOGGED_IN',
@@ -54,7 +55,8 @@ export default function App() {
       }
 
       setChatState(states.OFFER_RECEIVED);
-      rtcOffer.current = message.offer;
+      rtcOffer.current = message;
+      rtcServiceContainer.current = new RTCInviteeService(SignallingService.instance, username);
     };
 
   }, [chatState]);
@@ -62,8 +64,15 @@ export default function App() {
   // ****** EVENT HANDLERS ******
   function inviteToChat()
   {
-    rtcServiceContainer.current = new RTCHostService(SignallingService.instance, inviteeName);
-    rtcServiceContainer.current.beginConnect();
+    rtcServiceContainer.current = new RTCHostService(SignallingService.instance, username);
+    rtcServiceContainer.current.beginConnect(inviteeName);
+  }
+
+  function acceptChatOffer()
+  {
+    rtcServiceContainer.current.acceptOffer(rtcOffer.current);
+    // TODO don't just throw away if we blow up.
+    rtcOffer.current = null;
   }
 
   // ****** RENDER ******
@@ -118,7 +127,7 @@ export default function App() {
     return (
       <div>
         <p>You have a received an offer to chat.  Would you like to accept?</p>
-        <button type="button">Accept</button>
+        <button type="button" onClick={acceptChatOffer}>Accept</button>
       </div>
     );
   }

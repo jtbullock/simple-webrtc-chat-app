@@ -54,7 +54,7 @@ export default function App() {
       }
 
       setChatState(states.OFFER_RECEIVED);
-      rtcOffer.instance = message.offer;
+      rtcOffer.current = message.offer;
     };
 
   }, [chatState]);

@@ -38,14 +38,17 @@ export default class RTCHostService {
 
     beginConnect()
     {
-        this.signallingService.createOffer()
-            .then(offer => this.signallingService.setLocalDescription(offer))
+        this.rtcPeerConnection.createOffer()
+            .then(offer => this.rtcPeerConnection.setLocalDescription(offer))
             .then(() => {
                 // TODO if fail, unregister?
                 this.signallingService.registerRtcService(this.inviteeName, this);
-                this.signallingService.sendOffer(this.inviteeName, this.signallingService.localDescription);
+                this.signallingService.sendOffer(this.inviteeName, this.rtcPeerConnection.localDescription);
             })
-            .catch(() => { throw new Error('Error sending offer to remote user.') });
+            .catch(e => { 
+                console.log(e);
+                throw new Error('Error sending offer to remote user.');
+            });
     }
 
 

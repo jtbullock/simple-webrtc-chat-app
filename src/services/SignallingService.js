@@ -40,7 +40,7 @@ class SignallingService {
 
     registerRtcService(name, service)
     {
-        this.rtcServices.push({[name]: service});
+        this.rtcServices[name] = service;
     }
 
     onMessage(message)

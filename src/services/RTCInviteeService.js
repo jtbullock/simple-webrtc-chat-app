@@ -4,6 +4,8 @@ export default class RTCInviteeService
 {
     constructor(signallingService, name)
     {
+        this.rtcPeerConnection = new RTCPeerConnection(config.rtcPeerConnectionConfig);
+
         if(!signallingService) {
             throw new Error('RTCHostService: Missing required parameter \'signallingService\'');
         }
@@ -13,7 +15,6 @@ export default class RTCInviteeService
 
         this.signallingService.registerRtcService(this.localName, this);
 
-        this.rtcPeerConnection = new RTCPeerConnection(config.rtcPeerConnectionConfig);
         this.rtcPeerConnection.ondatachannel = event => {
             this.rtcChannel = event.channel;
             // onMessage

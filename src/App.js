@@ -56,7 +56,6 @@ export default function App() {
 
       setChatState(states.OFFER_RECEIVED);
       rtcOffer.current = message;
-      rtcServiceContainer.current = new RTCInviteeService(SignallingService.instance, username);
     };
 
   }, [chatState]);
@@ -70,6 +69,7 @@ export default function App() {
 
   function acceptChatOffer()
   {
+    rtcServiceContainer.current = new RTCInviteeService(SignallingService.instance, username);
     rtcServiceContainer.current.acceptOffer(rtcOffer.current);
     // TODO don't just throw away if we blow up.
     rtcOffer.current = null;

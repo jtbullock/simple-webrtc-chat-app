@@ -19,6 +19,8 @@ export default class RTCHostService {
         this.localName = name;
         this.channelState = "closed";
 
+        this.iceCandidates = [];
+
         this.constructPeerConnection();
     }
 
@@ -27,10 +29,15 @@ export default class RTCHostService {
         this.rtcPeerConnection = new RTCPeerConnection(rtcPeerConnectionConfig);
 
         this.rtcPeerConnection.onicecandidate = event => {
-            if(event.candidate)
-            {
-                this.signallingService.sendCandidate(this.inviteeName, event.candidate);
+            if(!event.candidate) return;
+
+            if(!this.rtcPeerConnection.remoteDescription) {
+                this.iceCandidates.push(event.candidate);
+                return;
             }
+
+            this.signallingService.sendCandidate(this.inviteeName, event.candidate);
+
         }
 
         this.rtcChannel = this.rtcPeerConnection.createDataChannel('sendChannel');

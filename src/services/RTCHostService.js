@@ -12,14 +12,15 @@ export default class RTCHostService {
         }
 
         this.signallingService = signallingService;
-        this.signallingService.registerRtcService(this.localName, this);
-
         this.localName = name;
-        this.channelState = "closed";
 
         this.iceCandidates = [];
 
         this.constructPeerConnection();
+        this.signallingService.registerRtcService(this.localName, this);
+
+        this.onChannelOpen = () => {};
+        this.onMessage = () => {};
     }
 
     constructPeerConnection() {
@@ -34,11 +35,12 @@ export default class RTCHostService {
             }
 
             this.signallingService.sendCandidate(this.inviteeName, event.candidate);
-        }
+        };
 
         this.rtcChannel = this.rtcPeerConnection.createDataChannel('sendChannel');
-        this.rtcChannel.onopen = e => this.channelState = e.readyState;
-        this.rtcChannel.onclose = e => this.channelState = e.readyState;
+        this.rtcChannel.onopen = () => this.onChannelOpen();
+        this.rtcChannel.onmessage = event => this.onMessage(event.data);
+        // this.rtcChannel.onclose = e => this.channelState = e.readyState;
     }
 
     beginConnect(inviteeName) {
@@ -57,7 +59,7 @@ export default class RTCHostService {
     }
 
     acceptAnswer(answer) {
-        this.signallingService.setRemoteDescription(answer);
+        this.rtcPeerConnection.setRemoteDescription(answer);
 
         while (this.iceCandidates.length) {
             this.signallingService.sendCandidate(this.inviteeName, this.iceCandidates.pop());
@@ -65,7 +67,10 @@ export default class RTCHostService {
     }
 
     addCandidate(candidate) {
-        console.log("Adding candidate.");
         this.rtcPeerConnection.addIceCandidate(candidate);
-    };
+    }
+
+    sendMessage(messageText) {
+        this.rtcChannel.send(messageText);
+    }
 }

@@ -2,14 +2,12 @@ import {rtcPeerConnectionConfig} from '../config';
 
 export default class RTCHostService {
 
-    constructor(signallingService, name)
-    {
-        if(!signallingService) {
+    constructor(signallingService, name) {
+        if (!signallingService) {
             throw new Error('RTCHostService: Missing required parameter \'signallingService\'');
         }
 
-        if(name == null || name.trim() === '')
-        {
+        if (name == null || name.trim() === '') {
             throw new Error('RTCHostService: Missing required parameter \'name\'');
         }
 
@@ -24,20 +22,18 @@ export default class RTCHostService {
         this.constructPeerConnection();
     }
 
-    constructPeerConnection()
-    {
+    constructPeerConnection() {
         this.rtcPeerConnection = new RTCPeerConnection(rtcPeerConnectionConfig);
 
         this.rtcPeerConnection.onicecandidate = event => {
-            if(!event.candidate) return;
+            if (!event.candidate) return;
 
-            if(!this.rtcPeerConnection.remoteDescription) {
+            if (!this.rtcPeerConnection.remoteDescription) {
                 this.iceCandidates.push(event.candidate);
                 return;
             }
 
             this.signallingService.sendCandidate(this.inviteeName, event.candidate);
-
         }
 
         this.rtcChannel = this.rtcPeerConnection.createDataChannel('sendChannel');
@@ -45,8 +41,7 @@ export default class RTCHostService {
         this.rtcChannel.onclose = e => this.channelState = e.readyState;
     }
 
-    beginConnect(inviteeName)
-    {
+    beginConnect(inviteeName) {
         this.inviteeName = inviteeName;
 
         this.rtcPeerConnection.createOffer()
@@ -55,15 +50,18 @@ export default class RTCHostService {
                 // TODO if fail, unregister?
                 this.signallingService.sendOffer(this.inviteeName, this.rtcPeerConnection.localDescription);
             })
-            .catch(e => { 
+            .catch(e => {
                 console.log(e);
                 throw new Error('Error sending offer to remote user.');
             });
     }
 
-    acceptAnswer(answer)
-    {
+    acceptAnswer(answer) {
         this.signallingService.setRemoteDescription(answer);
+
+        while (this.iceCandidates.length) {
+            this.signallingService.sendCandidate(this.inviteeName, this.iceCandidates.pop());
+        }
     }
 
     addCandidate(candidate) {

@@ -4,6 +4,7 @@ import shortid from 'shortid';
 import SignallingService from './services/SignallingService';
 import RTCHostService from './services/RTCHostService';
 import RTCInviteeService from './services/RTCInviteeService';
+import Login from './components/login';
 
 const states = {
     NOT_LOGGED_IN: 'NOT_LOGGED_IN',
@@ -22,7 +23,6 @@ const states = {
 export default function App() {
 
     const [chatState, setChatState] = useState(states.NOT_LOGGED_IN);
-    const [loginUsername, setLoginUsername] = useState('');
     const [username, setUsername] = useState('');
     const [inviteeName, setInviteeName] = useState('');
     const [isSocketConnected, setIsSocketConnected] = useState(false);
@@ -37,17 +37,6 @@ export default function App() {
             setIsSocketConnected(true);
         };
     }, []);
-
-    useEffect(() => {
-        SignallingService.instance.onLogin = message => {
-            if (message.success) {
-                setUsername(loginUsername);
-                setChatState(states.NO_ACTIVE_CHAT);
-            } else {
-                console.log("Unable to login: " + message.message);
-            }
-        };
-    }, [loginUsername]);
 
     useEffect(() => {
         SignallingService.instance.onOffer = message => {
@@ -91,6 +80,11 @@ export default function App() {
         setMessage('');
     }
 
+    function handleLogin(loginUsername) {
+        setUsername(loginUsername);
+        setChatState(states.NO_ACTIVE_CHAT);
+    }
+
     // ****** RENDER ******
 
     if (!isSocketConnected) {
@@ -101,7 +95,7 @@ export default function App() {
         <div>
             <h1>Chat App</h1>
 
-            {chatState === states.NOT_LOGGED_IN && renderLogin()}
+            {chatState === states.NOT_LOGGED_IN && <Login onLogin={handleLogin}/>}
 
             {chatState === states.NO_ACTIVE_CHAT && renderChatSelector()}
 
@@ -111,19 +105,8 @@ export default function App() {
         </div>
     );
 
-    function renderLogin() {
-        return (
-            <div>
-                <label htmlFor="loginUsername">Username:
-                    <input type="text" id="loginUsername" name="loginUsername"
-                           value={loginUsername} onChange={e => setLoginUsername(e.target.value)}/>
-                    <button type="button" onClick={() => SignallingService.instance.login(loginUsername)}>Login</button>
-                </label>
-            </div>
-        );
-    }
-
     function renderChatSelector() {
+
         return (
             <div>
                 <p>Logged in as: {username}</p>

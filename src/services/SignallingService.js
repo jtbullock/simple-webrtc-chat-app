@@ -4,24 +4,28 @@ let isConnected = false;
 
 class SignallingService {
 
-    constructor(socketServerUri = cSocketServerUri)
-    {
+    constructor(socketServerUri = cSocketServerUri) {
         this.isLoggedIn = false;
         this.socketServerUri = socketServerUri;
-        
+
         // Subscribers
         this.rtcServices = {};
 
         // Events
-        this.onLogin = () => {};
-        this.onOpen = () => {};
-        this.onOffer = () => {};
+        this.onLogin = () => {
+        };
+        this.onOpen = () => {
+        };
+        this.onOffer = () => {
+        };
 
         this.setupWebSocket();
+
+        // Bind context
+        this.login = this.login.bind(this);
     }
 
-    setupWebSocket()
-    {
+    setupWebSocket() {
         this.webSocket = new WebSocket(this.socketServerUri);
 
         this.webSocket.onopen = () => {
@@ -38,16 +42,13 @@ class SignallingService {
         };
     }
 
-    registerRtcService(name, service)
-    {
+    registerRtcService(name, service) {
         this.rtcServices[name] = service;
     }
 
-    onMessage(message)
-    {
-        switch(message.type) {
+    onMessage(message) {
+        switch (message.type) {
             case "login":
-                this.isLoggedIn = true;
                 this.onLogin(message);
                 break;
             case "offer":
@@ -89,11 +90,6 @@ class SignallingService {
     }
 
     login(name) {
-        if(this.isLoggedIn)
-        {
-            throw new Error("User is already logged in.");
-        }
-
         this.send({type: "login", name});
     }
 }

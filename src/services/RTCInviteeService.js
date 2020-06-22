@@ -18,7 +18,7 @@ export default class RTCInviteeService {
 
         this.rtcPeerConnection.ondatachannel = event => {
             this.rtcChannel = event.channel;
-            this.rtcChannel.onopen = () => this.onChannelOpen();
+            this.rtcChannel.onopen = () => console.log('Channel open');
             this.rtcChannel.onmessage = event => this.onMessage(event.data);
             // onOpen
             // onClose
@@ -38,7 +38,7 @@ export default class RTCInviteeService {
         this.rtcPeerConnection.setRemoteDescription(data.offer)
             .then(() => this.rtcPeerConnection.createAnswer())
             .then(answer => this.rtcPeerConnection.setLocalDescription(answer))
-            .then(() => this.signallingService.sendAnswer(data.name, this.rtcPeerConnection.localDescription))
+            .then(() => this.signallingService.sendAnswer(data.name, true, this.rtcPeerConnection.localDescription))
             .then(() => {
                 this.hostName = data.name;
             })
@@ -46,6 +46,10 @@ export default class RTCInviteeService {
                 console.log("Error sending answer: ");
                 console.log(e);
             });
+    }
+
+    declineOffer(data) {
+        this.signallingService.sendAnswer(data.name, false);
     }
 
     addCandidate(candidate) {

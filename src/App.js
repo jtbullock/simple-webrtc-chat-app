@@ -4,7 +4,8 @@ import shortid from 'shortid';
 import SignallingService from './services/SignallingService';
 import RTCHostService from './services/RTCHostService';
 import RTCInviteeService from './services/RTCInviteeService';
-import Login from './components/login';
+import Login from './components/Login';
+import ChatSelector from './components/ChatSelector';
 
 const states = {
     NOT_LOGGED_IN: 'NOT_LOGGED_IN',
@@ -24,10 +25,10 @@ export default function App() {
 
     const [chatState, setChatState] = useState(states.NOT_LOGGED_IN);
     const [username, setUsername] = useState('');
-    const [inviteeName, setInviteeName] = useState('');
     const [isSocketConnected, setIsSocketConnected] = useState(false);
     const [messages, setMessages] = useState([]);
     const [message, setMessage] = useState('');
+    const [chattingWithUsername, setChattingWithUsername] = useState('');
 
     const rtcOffer = useRef(null);
     const rtcServiceContainer = useRef(null);
@@ -52,13 +53,21 @@ export default function App() {
     }, [chatState]);
 
     // ****** EVENT HANDLERS ******
-    function inviteToChat() {
+    function inviteToChat(inviteeName) {
         rtcServiceContainer.current = new RTCHostService(SignallingService.instance, username);
         rtcServiceContainer.current.beginConnect(inviteeName);
 
-        rtcServiceContainer.current.onChannelOpen = setChatState(states.CHAT_ACTIVE);
-        rtcServiceContainer.current.onMessage = data => {
-            setMessages(prevState => [...prevState, {name: inviteeName, text: data, id: shortid.generate()}]);
+        setChattingWithUsername(inviteeName);
+        setChatState(states.SENDING_OFFER);
+
+        rtcServiceContainer.current.onInviteAnswer = isAccepted => {
+            if (isAccepted) {
+                setChatState(states.CHAT_ACTIVE);
+
+                rtcServiceContainer.current.onMessage = data => {
+                    setMessages(prevState => [...prevState, {name: inviteeName, text: data, id: shortid.generate()}]);
+                };
+            }
         };
     }
 
@@ -70,11 +79,12 @@ export default function App() {
 
         rtcServiceContainer.current.onChannelOpen = setChatState(states.CHAT_ACTIVE);
         rtcServiceContainer.current.onMessage = data => {
-            setMessages(prevState => [...prevState, {name: inviteeName, text: data, id: shortid.generate()}]);
+            setMessages(prevState => [...prevState, {name: chattingWithUsername, text: data, id: shortid.generate()}]);
         };
     }
 
-    function sendMessage() {
+    function sendMessage(e) {
+        e.preventDefault();
         setMessages(prevState => [...prevState, {name: username, text: message, id: shortid.generate()}]);
         rtcServiceContainer.current.sendMessage(message);
         setMessage('');
@@ -95,29 +105,22 @@ export default function App() {
         <div>
             <h1>Chat App</h1>
 
+            {chatState !== states.NOT_LOGGED_IN &&
+            <div>
+                Logged in as: {username}
+            </div>}
+
             {chatState === states.NOT_LOGGED_IN && <Login onLogin={handleLogin}/>}
 
-            {chatState === states.NO_ACTIVE_CHAT && renderChatSelector()}
+            {chatState === states.NO_ACTIVE_CHAT && <ChatSelector onInviteToChat={inviteToChat}/>}
+
+            {chatState === states.SENDING_OFFER && <div>Waiting for acceptance...</div>}
 
             {chatState === states.OFFER_RECEIVED && renderOfferReceived()}
 
             {chatState === states.CHAT_ACTIVE && renderChat()}
         </div>
     );
-
-    function renderChatSelector() {
-
-        return (
-            <div>
-                <p>Logged in as: {username}</p>
-                <label htmlFor="inviteeUsername">Invitee Username:
-                    <input type="text" id="inviteeUsername" name="inviteeUsername"
-                           value={inviteeName} onChange={e => setInviteeName(e.target.value)}/>
-                    <button type="button" onClick={inviteToChat}>Start Chat</button>
-                </label>
-            </div>
-        )
-    }
 
     function renderOfferReceived() {
         return (
@@ -131,16 +134,16 @@ export default function App() {
     function renderChat() {
         return (
             <div>
-                <h3>Chat with {inviteeName}</h3>
+                <h3>Chat with {chattingWithUsername}</h3>
 
-                <div>
+                <form onSubmit={sendMessage}>
                     <label htmlFor="message-text">
                         Message:
                         <input type="text" id="message-text" name="message-text"
                                value={message} onChange={e => setMessage(e.target.value)}/>
-                        <button type="button" onClick={sendMessage}>Send</button>
+                        <button type="submit">Send</button>
                     </label>
-                </div>
+                </form>
 
                 {messages.map(message => <div key={message.id}><strong>{message.name}</strong> {message.text}</div>)}
             </div>

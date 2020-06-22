@@ -19,8 +19,12 @@ export default class RTCHostService {
         this.constructPeerConnection();
         this.signallingService.registerRtcService(this.localName, this);
 
-        this.onChannelOpen = () => {};
-        this.onMessage = () => {};
+        this.onChannelOpen = () => {
+        };
+        this.onMessage = () => {
+        };
+        this.onInviteAnswer = () => {
+        };
     }
 
     constructPeerConnection() {
@@ -38,7 +42,8 @@ export default class RTCHostService {
         };
 
         this.rtcChannel = this.rtcPeerConnection.createDataChannel('sendChannel');
-        this.rtcChannel.onopen = () => this.onChannelOpen();
+        // this.rtcChannel.onopen = () => this.onChannelOpen();
+        this.rtcChannel.onopen = () => console.log('channel open');
         this.rtcChannel.onmessage = event => this.onMessage(event.data);
         // this.rtcChannel.onclose = e => this.channelState = e.readyState;
     }
@@ -58,11 +63,16 @@ export default class RTCHostService {
             });
     }
 
-    acceptAnswer(answer) {
-        this.rtcPeerConnection.setRemoteDescription(answer);
+    handleAnswer(answer) {
+        this.onInviteAnswer(answer.isAccepted);
 
-        while (this.iceCandidates.length) {
-            this.signallingService.sendCandidate(this.inviteeName, this.iceCandidates.pop());
+        if (answer.isAccepted) {
+            this.onInviteAnswer();
+            this.rtcPeerConnection.setRemoteDescription(answer.answer);
+
+            while (this.iceCandidates.length) {
+                this.signallingService.sendCandidate(this.inviteeName, this.iceCandidates.pop());
+            }
         }
     }
 

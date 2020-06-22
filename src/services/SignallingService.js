@@ -77,12 +77,12 @@ class SignallingService {
         this.send({type: "candidate", name, candidate});
     }
 
-    sendAnswer(name, answer) {
-        this.send({type: 'answer', answer, name});
+    sendAnswer(name, isAccepted, answer) {
+        this.send({type: 'answer', isAccepted, answer, name});
     }
 
     handleAnswer(message) {
-        this.rtcServices[message.name].acceptAnswer(message.answer);
+        this.rtcServices[message.name].handleAnswer(message);
     }
 
     handleCandidate(message) {

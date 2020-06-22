@@ -31,9 +31,9 @@ export default function Login({onLogin}) {
     return (
         <form onSubmit={handleLogin}>
             <label htmlFor="loginUsername">Username:
-                <input type="text" id="loginUsername" name="loginUsername"
+                <input type="text" id="loginUsername" name="loginUsername" autoFocus
                        value={loginUsername} onChange={e => setLoginUsername(e.target.value)}/>
-                <button type="button" onClick={handleLogin}>Login</button>
+                <button type="submit">Login</button>
             </label>
             {isLoginFailed &&
             <div style={{color: 'red'}}>Failed to login: {loginFailureMessage}</div>

@@ -1,6 +1,8 @@
 export default function beginConnect(rtcConnectionData, signallingService) {
     const {rtcConnection, remoteUsername} = rtcConnectionData;
 
+    const rtcChannel = rtcConnection.createDataChannel('sendChannel');
+
     rtcConnection.createOffer()
         .then(offer => rtcConnection.setLocalDescription(offer))
         .then(() => {
@@ -11,4 +13,6 @@ export default function beginConnect(rtcConnectionData, signallingService) {
             console.log(e);
             throw new Error('Error sending offer to remote user.');
         });
+
+    rtcConnectionData.rtcChannel = rtcChannel;
 }

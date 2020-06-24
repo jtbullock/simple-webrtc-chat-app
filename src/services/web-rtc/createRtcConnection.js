@@ -1,4 +1,5 @@
 import {rtcPeerConnectionConfig} from '~/config';
+import {RtcConnectionData} from "./RtcConnectionData";
 
 export default function createRtcConnection(signallingService, remoteUsername)
 {
@@ -14,6 +15,11 @@ export default function createRtcConnection(signallingService, remoteUsername)
 
     const iceCandidates = [];
 
+    const rtcConnectionData = new RtcConnectionData()
+    rtcConnectionData.rtcConnection = rtcConnection;
+    rtcConnectionData.iceCandidates = iceCandidates;
+    rtcConnectionData.remoteUsername = remoteUsername;
+
     rtcConnection.onicecandidate = event => {
         if(!event.candidate) return;
 
@@ -24,15 +30,6 @@ export default function createRtcConnection(signallingService, remoteUsername)
 
         signallingService.sendCandidate(remoteUsername, event.candidate);
     }
-
-    const rtcChannel = rtcConnection.createDataChannel('sendChannel');
-
-    const rtcConnectionData = {
-        rtcConnection,
-        iceCandidates,
-        rtcChannel,
-        remoteUsername
-    };
 
     signallingService.registerRtcService(remoteUsername, rtcConnectionData);
 

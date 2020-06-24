@@ -1,6 +1,17 @@
 export default function handleOffer(rtcConnectionData, signallingService, data) {
     const {rtcConnection} = rtcConnectionData;
 
+    rtcConnection.ondatachannel = event => {
+        rtcConnectionData.rtcChannel = event.channel;
+        rtcConnectionData.rtcChannel.onopen = () => {
+            rtcConnectionData.onChannelOpen();
+        };
+        rtcConnectionData.rtcChannel.onmessage = (event) => {
+            rtcConnectionData.onMessage(event.data);
+        };
+        // onClose
+    };
+
     rtcConnection.setRemoteDescription(data.offer)
         .then(() => rtcConnection.createAnswer())
         .then(answer => rtcConnection.setLocalDescription(answer))

@@ -1,4 +1,6 @@
 import {socketServerUri as cSocketServerUri} from '../config';
+import handleOffer from "./web-rtc/handleOffer";
+import handleAnswer from "./web-rtc/handleAnswer";
 
 let isConnected = false;
 
@@ -52,12 +54,17 @@ class SignallingService {
                 this.onLogin(message);
                 break;
             case "offer":
+                // const rtcConnectionData = this.rtcServices[message.name];
+                // handleOffer(rtcConnectionData, this, message);
                 this.onOffer(message);
                 break;
             case "answer":
-                this.handleAnswer(message);
+                const rtcConnectionData2 = this.rtcServices[message.name];
+                handleAnswer(rtcConnectionData2, this, message);
+                // this.handleAnswer(message);
                 break;
             case "candidate":
+                const rtcConnectionData3 = this.rtcServices[message.name];
                 this.handleCandidate(message);
                 break;
             default:
@@ -81,12 +88,8 @@ class SignallingService {
         this.send({type: 'answer', isAccepted, answer, name});
     }
 
-    handleAnswer(message) {
-        this.rtcServices[message.name].handleAnswer(message);
-    }
-
     handleCandidate(message) {
-        this.rtcServices[message.name].addCandidate(message.candidate);
+        this.rtcServices[message.name].rtcConnection.addIceCandidate(message.candidate);
     }
 
     login(name) {

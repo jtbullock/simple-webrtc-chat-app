@@ -35,13 +35,13 @@ export default function App() {
     const rtcConnectionData = useRef(null);
 
     useEffect(() => {
-        SignallingService.instance.onOpen = () => {
+        SignallingService.instance.on('open', () => {
             setIsSocketConnected(true);
-        };
+        });
     }, []);
 
     useEffect(() => {
-        SignallingService.instance.onOffer = message => {
+        SignallingService.instance.on('offer', message => {
             if (chatState !== states.NO_ACTIVE_CHAT) {
                 // TODO Wire up API to formally deny the request.
                 return;
@@ -49,7 +49,7 @@ export default function App() {
 
             setChatState(states.OFFER_RECEIVED);
             rtcOffer.current = message;
-        };
+        });
 
     }, [chatState]);
 
@@ -73,14 +73,18 @@ export default function App() {
     }
 
     function acceptChatOffer() {
+        console.log('Accepting offer');
         const offer = rtcOffer.current;
 
+        console.log('Creating RTC connection');
         rtcConnectionData.current = createRtcConnection(SignallingService.instance, offer.name);
         handleOffer(rtcConnectionData.current, SignallingService.instance, offer);
 
         // TODO don't just throw away if we blow up.
+        console.log('Getting rid of stored offer')
         rtcOffer.current = null;
 
+        console.log('Wiring up event handlers');
         rtcConnectionData.current.on('channelOpen', () => {
             setChatState(states.CHAT_ACTIVE);
         });

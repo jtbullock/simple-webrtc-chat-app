@@ -84,11 +84,16 @@ export default function App() {
 
         console.log('Wiring up event handlers');
         rtcConnectionData.current.on('channelOpen', () => {
+            setChattingWithUsername(rtcConnectionData.current.remoteUsername);
             setChatState(states.CHAT_ACTIVE);
         });
 
         rtcConnectionData.current.on('message', data => {
-            setMessages(prevState => [...prevState, {name: chattingWithUsername, text: data, id: shortid.generate()}]);
+            setMessages(prevState => [...prevState, {
+                name: rtcConnectionData.current.remoteUsername,
+                text: data,
+                id: shortid.generate()
+            }]);
         });
     }
 

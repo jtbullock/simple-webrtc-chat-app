@@ -1,12 +1,11 @@
 import React, {useState, useRef, useEffect} from 'react';
 import shortid from 'shortid';
-// import './App.css';
 import SignallingService from './services/SignallingService';
 import Login from './components/Login';
 import ChatSelector from './components/ChatSelector';
-import createRtcConnection from "./services/web-rtc/createRtcConnection";
 import handleOffer from "./services/web-rtc/handleOffer";
 import beginConnect from "./services/web-rtc/beginConnect";
+import Chat from "./components/Chat";
 
 const states = {
     NOT_LOGGED_IN: 'NOT_LOGGED_IN',
@@ -28,7 +27,6 @@ export default function App() {
     const [username, setUsername] = useState('');
     const [isSocketConnected, setIsSocketConnected] = useState(false);
     const [messages, setMessages] = useState([]);
-    const [message, setMessage] = useState('');
     const [chattingWithUsername, setChattingWithUsername] = useState('');
 
     const rtcOffer = useRef(null);
@@ -98,11 +96,9 @@ export default function App() {
         });
     }
 
-    function sendMessage(e) {
-        e.preventDefault();
+    function handleMessageSend(message) {
         setMessages(prevState => [...prevState, {name: username, text: message, id: shortid.generate()}]);
         rtcConnectionData.current.rtcChannel.send(message);
-        setMessage('');
     }
 
     function handleLogin(loginUsername) {
@@ -117,14 +113,9 @@ export default function App() {
     }
 
     return (
-        <div className="container mx-auto md:border rounded border-gray p-5 md:mt-5 h-screen">
+        <div className="container mx-auto md:border rounded border-gray p-5 md:my-5 flex-grow flex flex-col">
 
             <h1 className="text-center text-xl mb-2">Chat App</h1>
-
-            {/*{chatState !== states.NOT_LOGGED_IN &&*/}
-            {/*<div className="bg-gray-400 p-3 rounded">*/}
-            {/*    Logged in as: <span className="font-bold">{username}</span>*/}
-            {/*</div>}*/}
 
             {chatState === states.NOT_LOGGED_IN && <Login onLogin={handleLogin}/>}
 
@@ -134,7 +125,8 @@ export default function App() {
 
             {chatState === states.OFFER_RECEIVED && renderOfferReceived()}
 
-            {chatState === states.CHAT_ACTIVE && renderChat()}
+            {chatState === states.CHAT_ACTIVE &&
+            <Chat messages={messages} chattingWithUsername={chattingWithUsername} onMessageSend={handleMessageSend}/>}
         </div>
     );
 
@@ -148,30 +140,6 @@ export default function App() {
                 </button>
             </div>
         );
-    }
-
-    function renderChat() {
-        return (
-            <div className="flex flex-col h-full">
-                <div className="bg-gray-400 p-3 rounded mb-3">
-                    Chatting with <span className="font-bold">{chattingWithUsername}</span>
-                </div>
-
-                <div className="flex-grow overflow-y-auto">
-                    {messages.map(message => <div key={message.id}><strong>{message.name}</strong> {message.text}
-                    </div>)}
-                </div>
-
-                <form onSubmit={sendMessage} className="flex">
-                    <input type="text" id="message-text" name="message-text"
-                           value={message} onChange={e => setMessage(e.target.value)}
-                           placeholder="message"
-                           className="flex-grow full border rounded border-gray p-1 mr-3"/>
-                    <button type="submit" className="rounded bg-blue-500 text-white py-2 px-8">Send</button>
-                </form>
-
-            </div>
-        )
     }
 
     function renderWaitingForResponse() {

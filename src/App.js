@@ -55,8 +55,7 @@ export default function App() {
 
     // ****** EVENT HANDLERS ******
     function inviteToChat(inviteeName) {
-        rtcConnectionData.current = createRtcConnection(SignallingService.instance, inviteeName);
-        beginConnect(rtcConnectionData.current);
+        rtcConnectionData.current = beginConnect(inviteeName, SignallingService.instance);
 
         setChattingWithUsername(inviteeName);
         setChatState(states.SENDING_OFFER);
@@ -77,8 +76,7 @@ export default function App() {
         const offer = rtcOffer.current;
 
         console.log('Creating RTC connection');
-        rtcConnectionData.current = createRtcConnection(SignallingService.instance, offer.name);
-        handleOffer(rtcConnectionData.current, offer);
+        rtcConnectionData.current = handleOffer(SignallingService.instance, offer);
 
         // TODO don't just throw away if we blow up.
         console.log('Getting rid of stored offer');

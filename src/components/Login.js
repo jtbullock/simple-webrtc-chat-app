@@ -8,7 +8,7 @@ export default function Login({onLogin}) {
     const [loginFailureMessage, setLoginFailureMessage] = useState('');
 
     useEffect(() => {
-        SignallingService.instance.onLogin = message => {
+        const unbind = SignallingService.instance.on('login', message => {
             if (message.success) {
                 setIsLoginFailed(false);
                 onLogin(loginUsername);
@@ -16,10 +16,10 @@ export default function Login({onLogin}) {
                 setIsLoginFailed(true);
                 setLoginFailureMessage(message.message);
             }
-        };
+        });
 
         return () => {
-            SignallingService.instance.onLogin = {};
+            unbind();
         }
     }, [loginUsername]);
 

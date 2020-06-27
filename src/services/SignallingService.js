@@ -1,4 +1,7 @@
 import {socketServerUri as cSocketServerUri} from '../config';
+import handleOffer from "./web-rtc/handleOffer";
+import handleAnswer from "./web-rtc/handleAnswer";
+import {createNanoEvents} from "nanoevents";
 
 let isConnected = false;
 
@@ -12,12 +15,7 @@ class SignallingService {
         this.rtcServices = {};
 
         // Events
-        this.onLogin = () => {
-        };
-        this.onOpen = () => {
-        };
-        this.onOffer = () => {
-        };
+        this.emitter = createNanoEvents();
 
         this.setupWebSocket();
 
@@ -30,11 +28,11 @@ class SignallingService {
 
         this.webSocket.onopen = () => {
             isConnected = true;
-            this.onOpen();
+            this.emitter.emit('open');
         };
 
         this.webSocket.onmessage = message => {
-            this.onMessage(JSON.parse(message.data));
+            this.handleMessage(JSON.parse(message.data));
         };
 
         this.webSocket.onclose = () => {
@@ -46,13 +44,14 @@ class SignallingService {
         this.rtcServices[name] = service;
     }
 
-    onMessage(message) {
+    // Handlers
+    handleMessage(message) {
         switch (message.type) {
             case "login":
-                this.onLogin(message);
+                this.emitter.emit('login', message);
                 break;
             case "offer":
-                this.onOffer(message);
+                this.emitter.emit('offer', message);
                 break;
             case "answer":
                 this.handleAnswer(message);
@@ -65,6 +64,16 @@ class SignallingService {
         }
     }
 
+    handleCandidate(message) {
+        this.rtcServices[message.name].rtcConnection.addIceCandidate(message.candidate);
+    }
+
+    handleAnswer(message) {
+        const rtcConnectionData = this.rtcServices[message.name];
+        handleAnswer(rtcConnectionData, message);
+    }
+
+    // Senders
     send(data) {
         this.webSocket.send(JSON.stringify(data));
     }
@@ -81,16 +90,13 @@ class SignallingService {
         this.send({type: 'answer', isAccepted, answer, name});
     }
 
-    handleAnswer(message) {
-        this.rtcServices[message.name].handleAnswer(message);
-    }
-
-    handleCandidate(message) {
-        this.rtcServices[message.name].addCandidate(message.candidate);
-    }
-
     login(name) {
         this.send({type: "login", name});
+    }
+
+    // Event facade
+    on(event, callback) {
+        return this.emitter.on(event, callback);
     }
 }
 

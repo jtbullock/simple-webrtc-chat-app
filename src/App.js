@@ -2,10 +2,11 @@ import React, {useState, useRef, useEffect} from 'react';
 import shortid from 'shortid';
 // import './App.css';
 import SignallingService from './services/SignallingService';
-import RTCHostService from './services/RTCHostService';
-import RTCInviteeService from './services/RTCInviteeService';
 import Login from './components/Login';
 import ChatSelector from './components/ChatSelector';
+import createRtcConnection from "./services/web-rtc/createRtcConnection";
+import handleOffer from "./services/web-rtc/handleOffer";
+import beginConnect from "./services/web-rtc/beginConnect";
 
 const states = {
     NOT_LOGGED_IN: 'NOT_LOGGED_IN',
@@ -31,16 +32,16 @@ export default function App() {
     const [chattingWithUsername, setChattingWithUsername] = useState('');
 
     const rtcOffer = useRef(null);
-    const rtcServiceContainer = useRef(null);
+    const rtcConnectionData = useRef(null);
 
     useEffect(() => {
-        SignallingService.instance.onOpen = () => {
+        SignallingService.instance.on('open', () => {
             setIsSocketConnected(true);
-        };
+        });
     }, []);
 
     useEffect(() => {
-        SignallingService.instance.onOffer = message => {
+        SignallingService.instance.on('offer', message => {
             if (chatState !== states.NO_ACTIVE_CHAT) {
                 // TODO Wire up API to formally deny the request.
                 return;
@@ -48,45 +49,55 @@ export default function App() {
 
             setChatState(states.OFFER_RECEIVED);
             rtcOffer.current = message;
-        };
+        });
 
     }, [chatState]);
 
     // ****** EVENT HANDLERS ******
     function inviteToChat(inviteeName) {
-        rtcServiceContainer.current = new RTCHostService(SignallingService.instance, username);
-        rtcServiceContainer.current.beginConnect(inviteeName);
+        rtcConnectionData.current = createRtcConnection(SignallingService.instance, inviteeName);
+        beginConnect(rtcConnectionData.current);
 
         setChattingWithUsername(inviteeName);
         setChatState(states.SENDING_OFFER);
 
-        rtcServiceContainer.current.onInviteAnswer = isAccepted => {
+        rtcConnectionData.current.on('answer', isAccepted => {
             if (isAccepted) {
                 setChatState(states.CHAT_ACTIVE);
 
-                rtcServiceContainer.current.onMessage = data => {
+                rtcConnectionData.current.on('message', data => {
                     setMessages(prevState => [...prevState, {name: inviteeName, text: data, id: shortid.generate()}]);
-                };
+                });
             }
-        };
+        });
     }
 
     function acceptChatOffer() {
-        rtcServiceContainer.current = new RTCInviteeService(SignallingService.instance, username);
-        rtcServiceContainer.current.acceptOffer(rtcOffer.current);
+        console.log('Accepting offer');
+        const offer = rtcOffer.current;
+
+        console.log('Creating RTC connection');
+        rtcConnectionData.current = createRtcConnection(SignallingService.instance, offer.name);
+        handleOffer(rtcConnectionData.current, offer);
+
         // TODO don't just throw away if we blow up.
+        console.log('Getting rid of stored offer');
         rtcOffer.current = null;
 
-        rtcServiceContainer.current.onChannelOpen = setChatState(states.CHAT_ACTIVE);
-        rtcServiceContainer.current.onMessage = data => {
+        console.log('Wiring up event handlers');
+        rtcConnectionData.current.on('channelOpen', () => {
+            setChatState(states.CHAT_ACTIVE);
+        });
+
+        rtcConnectionData.current.on('message', data => {
             setMessages(prevState => [...prevState, {name: chattingWithUsername, text: data, id: shortid.generate()}]);
-        };
+        });
     }
 
     function sendMessage(e) {
         e.preventDefault();
         setMessages(prevState => [...prevState, {name: username, text: message, id: shortid.generate()}]);
-        rtcServiceContainer.current.sendMessage(message);
+        rtcConnectionData.current.rtcChannel.send(message);
         setMessage('');
     }
 

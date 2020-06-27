@@ -1,36 +1,38 @@
 import {socketServerUri as cSocketServerUri} from '../config';
+import handleOffer from "./web-rtc/handleOffer";
+import handleAnswer from "./web-rtc/handleAnswer";
+import {createNanoEvents} from "nanoevents";
 
 let isConnected = false;
 
 class SignallingService {
 
-    constructor(socketServerUri = cSocketServerUri)
-    {
+    constructor(socketServerUri = cSocketServerUri) {
         this.isLoggedIn = false;
         this.socketServerUri = socketServerUri;
-        
+
         // Subscribers
         this.rtcServices = {};
 
         // Events
-        this.onLogin = () => {};
-        this.onOpen = () => {};
-        this.onOffer = () => {};
+        this.emitter = createNanoEvents();
 
         this.setupWebSocket();
+
+        // Bind context
+        this.login = this.login.bind(this);
     }
 
-    setupWebSocket()
-    {
+    setupWebSocket() {
         this.webSocket = new WebSocket(this.socketServerUri);
 
         this.webSocket.onopen = () => {
             isConnected = true;
-            this.onOpen();
+            this.emitter.emit('open');
         };
 
         this.webSocket.onmessage = message => {
-            this.onMessage(JSON.parse(message.data));
+            this.handleMessage(JSON.parse(message.data));
         };
 
         this.webSocket.onclose = () => {
@@ -38,20 +40,18 @@ class SignallingService {
         };
     }
 
-    registerRtcService(name, service)
-    {
+    registerRtcService(name, service) {
         this.rtcServices[name] = service;
     }
 
-    onMessage(message)
-    {
-        switch(message.type) {
+    // Handlers
+    handleMessage(message) {
+        switch (message.type) {
             case "login":
-                this.isLoggedIn = true;
-                this.onLogin(message);
+                this.emitter.emit('login', message);
                 break;
             case "offer":
-                this.onOffer(message);
+                this.emitter.emit('offer', message);
                 break;
             case "answer":
                 this.handleAnswer(message);
@@ -64,6 +64,16 @@ class SignallingService {
         }
     }
 
+    handleCandidate(message) {
+        this.rtcServices[message.name].rtcConnection.addIceCandidate(message.candidate);
+    }
+
+    handleAnswer(message) {
+        const rtcConnectionData = this.rtcServices[message.name];
+        handleAnswer(rtcConnectionData, message);
+    }
+
+    // Senders
     send(data) {
         this.webSocket.send(JSON.stringify(data));
     }
@@ -76,25 +86,17 @@ class SignallingService {
         this.send({type: "candidate", name, candidate});
     }
 
-    sendAnswer(name, answer) {
-        this.send({type: 'answer', answer, name});
-    }
-
-    handleAnswer(message) {
-        this.rtcServices[message.name].acceptAnswer(message.answer);
-    }
-
-    handleCandidate(message) {
-        this.rtcServices[message.name].addCandidate(message.candidate);
+    sendAnswer(name, isAccepted, answer) {
+        this.send({type: 'answer', isAccepted, answer, name});
     }
 
     login(name) {
-        if(this.isLoggedIn)
-        {
-            throw new Error("User is already logged in.");
-        }
-
         this.send({type: "login", name});
+    }
+
+    // Event facade
+    on(event, callback) {
+        return this.emitter.on(event, callback);
     }
 }
 

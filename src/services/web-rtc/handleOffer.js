@@ -1,5 +1,10 @@
-export default function handleOffer(rtcConnectionData, data) {
-    const {rtcConnection, signallingService} = rtcConnectionData;
+import createRtcConnection from "./createRtcConnection";
+
+export default function handleOffer(signallingService, offer) {
+
+    const rtcConnectionData = createRtcConnection(signallingService, offer.name);
+
+    const {rtcConnection} = rtcConnectionData;
 
     rtcConnection.ondatachannel = event => {
         rtcConnectionData.rtcChannel = event.channel;
@@ -12,15 +17,17 @@ export default function handleOffer(rtcConnectionData, data) {
         // onClose
     };
 
-    rtcConnection.setRemoteDescription(data.offer)
+    rtcConnection.setRemoteDescription(offer.offer)
         .then(() => rtcConnection.createAnswer())
         .then(answer => rtcConnection.setLocalDescription(answer))
-        .then(() => signallingService.sendAnswer(data.name, true, rtcConnection.localDescription))
+        .then(() => signallingService.sendAnswer(offer.name, true, rtcConnection.localDescription))
         .then(() => {
-            rtcConnectionData.remoteUsername = data.name;
+            rtcConnectionData.remoteUsername = offer.name;
         })
         .catch(e => {
             console.log("Error sending answer: ");
             console.log(e);
         });
+
+    return rtcConnectionData;
 }

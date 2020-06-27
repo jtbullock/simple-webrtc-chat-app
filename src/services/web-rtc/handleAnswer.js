@@ -1,5 +1,5 @@
-export default function handleAnswer(rtcConnectionData, signallingService, answer) {
-    const {rtcConnection, rtcChannel, iceCandidates, remoteUsername} = rtcConnectionData;
+export default function handleAnswer(rtcConnectionData, answer) {
+    const {rtcConnection, rtcChannel, iceCandidates, remoteUsername, signallingService} = rtcConnectionData;
     const {isAccepted} = answer;
 
     rtcConnectionData.onAnswer(isAccepted);

@@ -1,5 +1,5 @@
-export default function handleOffer(rtcConnectionData, signallingService, data) {
-    const {rtcConnection} = rtcConnectionData;
+export default function handleOffer(rtcConnectionData, data) {
+    const {rtcConnection, signallingService} = rtcConnectionData;
 
     rtcConnection.ondatachannel = event => {
         rtcConnectionData.rtcChannel = event.channel;

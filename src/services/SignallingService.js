@@ -70,7 +70,7 @@ class SignallingService {
 
     handleAnswer(message) {
         const rtcConnectionData = this.rtcServices[message.name];
-        handleAnswer(rtcConnectionData, this, message);
+        handleAnswer(rtcConnectionData, message);
     }
 
     // Senders

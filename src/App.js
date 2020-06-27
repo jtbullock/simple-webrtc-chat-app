@@ -56,7 +56,7 @@ export default function App() {
     // ****** EVENT HANDLERS ******
     function inviteToChat(inviteeName) {
         rtcConnectionData.current = createRtcConnection(SignallingService.instance, inviteeName);
-        beginConnect(rtcConnectionData.current, SignallingService.instance);
+        beginConnect(rtcConnectionData.current);
 
         setChattingWithUsername(inviteeName);
         setChatState(states.SENDING_OFFER);
@@ -78,10 +78,10 @@ export default function App() {
 
         console.log('Creating RTC connection');
         rtcConnectionData.current = createRtcConnection(SignallingService.instance, offer.name);
-        handleOffer(rtcConnectionData.current, SignallingService.instance, offer);
+        handleOffer(rtcConnectionData.current, offer);
 
         // TODO don't just throw away if we blow up.
-        console.log('Getting rid of stored offer')
+        console.log('Getting rid of stored offer');
         rtcOffer.current = null;
 
         console.log('Wiring up event handlers');

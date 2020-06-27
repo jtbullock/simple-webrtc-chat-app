@@ -1,5 +1,5 @@
-export default function beginConnect(rtcConnectionData, signallingService) {
-    const {rtcConnection, remoteUsername} = rtcConnectionData;
+export default function beginConnect(rtcConnectionData) {
+    const {rtcConnection, remoteUsername, signallingService} = rtcConnectionData;
 
     const rtcChannel = rtcConnection.createDataChannel('sendChannel');
 

@@ -49,6 +49,7 @@ export default function App() {
 
             setChatState(states.OFFER_RECEIVED);
             rtcOffer.current = message;
+            setChattingWithUsername(message.name);
         });
 
     }, [chatState]);
@@ -116,19 +117,20 @@ export default function App() {
     }
 
     return (
-        <div>
-            <h1>Chat App</h1>
+        <div className="container mx-auto md:border rounded border-gray p-5 md:mt-5 h-screen">
 
-            {chatState !== states.NOT_LOGGED_IN &&
-            <div>
-                Logged in as: {username}
-            </div>}
+            <h1 className="text-center text-xl mb-2">Chat App</h1>
+
+            {/*{chatState !== states.NOT_LOGGED_IN &&*/}
+            {/*<div className="bg-gray-400 p-3 rounded">*/}
+            {/*    Logged in as: <span className="font-bold">{username}</span>*/}
+            {/*</div>}*/}
 
             {chatState === states.NOT_LOGGED_IN && <Login onLogin={handleLogin}/>}
 
-            {chatState === states.NO_ACTIVE_CHAT && <ChatSelector onInviteToChat={inviteToChat}/>}
+            {chatState === states.NO_ACTIVE_CHAT && <ChatSelector username={username} onInviteToChat={inviteToChat}/>}
 
-            {chatState === states.SENDING_OFFER && <div>Waiting for acceptance...</div>}
+            {chatState === states.SENDING_OFFER && renderWaitingForResponse()}
 
             {chatState === states.OFFER_RECEIVED && renderOfferReceived()}
 
@@ -139,28 +141,44 @@ export default function App() {
     function renderOfferReceived() {
         return (
             <div>
-                <p>You have a received an offer to chat. Would you like to accept?</p>
-                <button type="button" onClick={acceptChatOffer}>Accept</button>
+                <p className="mb-3"><span className="font-semibold">{chattingWithUsername}</span> has sent you a chat
+                    request. Would you like to accept?</p>
+                <button type="button" onClick={acceptChatOffer}
+                        className="block w-full rounded bg-blue-500 text-white p-2 text-xl">Accept
+                </button>
             </div>
         );
     }
 
     function renderChat() {
         return (
-            <div>
-                <h3>Chat with {chattingWithUsername}</h3>
+            <div className="flex flex-col h-full">
+                <div className="bg-gray-400 p-3 rounded mb-3">
+                    Chatting with <span className="font-bold">{chattingWithUsername}</span>
+                </div>
 
-                <form onSubmit={sendMessage}>
-                    <label htmlFor="message-text">
-                        Message:
-                        <input type="text" id="message-text" name="message-text"
-                               value={message} onChange={e => setMessage(e.target.value)}/>
-                        <button type="submit">Send</button>
-                    </label>
+                <div className="flex-grow overflow-y-auto">
+                    {messages.map(message => <div key={message.id}><strong>{message.name}</strong> {message.text}
+                    </div>)}
+                </div>
+
+                <form onSubmit={sendMessage} className="flex">
+                    <input type="text" id="message-text" name="message-text"
+                           value={message} onChange={e => setMessage(e.target.value)}
+                           placeholder="message"
+                           className="flex-grow full border rounded border-gray p-1 mr-3"/>
+                    <button type="submit" className="rounded bg-blue-500 text-white py-2 px-8">Send</button>
                 </form>
 
-                {messages.map(message => <div key={message.id}><strong>{message.name}</strong> {message.text}</div>)}
             </div>
         )
     }
+
+    function renderWaitingForResponse() {
+        return (
+            <div>Waiting for <span className="font-semibold">{chattingWithUsername}</span> to accept your invite...
+            </div>
+        );
+    }
+
 }

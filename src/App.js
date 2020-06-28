@@ -113,7 +113,7 @@ export default function App() {
     }
 
     return (
-        <div className="container mx-auto md:border rounded border-gray p-5 md:my-5 flex-grow flex flex-col">
+        <div className="container mx-auto md:border rounded border-gray p-5 md:my-5 flex-grow flex flex-col overflow-hidden">
 
             <h1 className="text-center text-xl mb-2">Chat App</h1>
 

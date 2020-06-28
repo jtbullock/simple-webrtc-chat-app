@@ -15,12 +15,12 @@ export default function Chat({chattingWithUsername, messages, onMessageSend}) {
     }, [messages]);
 
     return (
-        <div className="flex flex-col h-full flex-grow">
+        <div className="flex flex-col h-full flex-grow overflow-hidden">
             <div className="bg-gray-400 p-3 rounded mb-3">
                 Chatting with <span className="font-bold">{chattingWithUsername}</span>
             </div>
 
-            <div className="flex-grow overflow-y-auto">
+            <div className="flex-grow overflow-y-auto mb-3">
                 {messages.map(message =>
                     <div key={message.id}><strong>{message.name}</strong> {message.text}</div>)
                 }

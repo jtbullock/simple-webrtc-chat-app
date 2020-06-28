@@ -16,7 +16,7 @@ export default function ChatSelector({username, onInviteToChat}) {
             <input type="text" id="inviteeUsername" name="inviteeUsername" autoFocus
                    value={inviteeName} onChange={e => setInviteeName(e.target.value)}
                    placeholder="invitee name"
-                   className="block w-full border rounded border-gray-600 text-xl p-1 mb-5"/>
+                   className="block w-full border rounded border-gray-600 text-xl px-2 py-1 mb-5"/>
             <button type="submit" className="block w-full rounded bg-blue-500 text-white p-2 text-xl">Send Chat Invite
             </button>
         </form>

@@ -35,7 +35,7 @@ export default function Login({onLogin}) {
 
             <input type="text" id="loginUsername" name="loginUsername" autoFocus
                    value={loginUsername} onChange={e => setLoginUsername(e.target.value)}
-                   placeholder="username" className="block w-full border rounded border-gray-600 text-xl p-1 mb-5"/>
+                   placeholder="username" className="block w-full border rounded border-gray-600 text-xl px-2 py-1 mb-5"/>
 
             <button type="submit" className="block w-full rounded bg-blue-500 text-white p-2 text-xl">Login</button>
             {isLoginFailed &&

@@ -6,6 +6,7 @@ import ChatSelector from './components/ChatSelector';
 import handleOffer from "./services/web-rtc/handleOffer";
 import beginConnect from "./services/web-rtc/beginConnect";
 import Chat from "./components/Chat";
+import {logInfo} from '~/services/logging';
 
 const states = {
     NOT_LOGGED_IN: 'NOT_LOGGED_IN',
@@ -40,6 +41,9 @@ export default function App() {
 
     useEffect(() => {
         SignallingService.instance.on('offer', message => {
+
+            logInfo(`Offer Received from ${message.name}`);
+
             if (chatState !== states.NO_ACTIVE_CHAT) {
                 // TODO Wire up API to formally deny the request.
                 return;
@@ -54,12 +58,14 @@ export default function App() {
 
     // ****** EVENT HANDLERS ******
     function inviteToChat(inviteeName) {
+        logInfo(`Sending invite to ${inviteeName}`);
         rtcConnectionData.current = beginConnect(inviteeName, SignallingService.instance);
 
         setChattingWithUsername(inviteeName);
         setChatState(states.SENDING_OFFER);
 
         rtcConnectionData.current.on('answer', isAccepted => {
+            logInfo(`Answer received.  Answer: ${isAccepted} `);
             if (isAccepted) {
                 setChatState(states.CHAT_ACTIVE);
 
@@ -71,18 +77,19 @@ export default function App() {
     }
 
     function acceptChatOffer() {
-        console.log('Accepting offer');
+        logInfo('Accepting offer');
         const offer = rtcOffer.current;
 
-        console.log('Creating RTC connection');
+        logInfo('Handling offer...');
         rtcConnectionData.current = handleOffer(SignallingService.instance, offer);
 
         // TODO don't just throw away if we blow up.
-        console.log('Getting rid of stored offer');
+        logInfo('Getting rid of stored offer');
         rtcOffer.current = null;
 
-        console.log('Wiring up event handlers');
+        logInfo('Wiring up event handlers');
         rtcConnectionData.current.on('channelOpen', () => {
+            logInfo('RTC Channel Open fired.');
             setChattingWithUsername(rtcConnectionData.current.remoteUsername);
             setChatState(states.CHAT_ACTIVE);
         });
@@ -113,7 +120,8 @@ export default function App() {
     }
 
     return (
-        <div className="container mx-auto md:border rounded border-gray p-5 md:my-5 flex-grow flex flex-col overflow-hidden">
+        <div
+            className="container mx-auto md:border rounded border-gray p-5 md:my-5 flex-grow flex flex-col overflow-hidden">
 
             <h1 className="text-center text-xl mb-2">Chat App</h1>
 

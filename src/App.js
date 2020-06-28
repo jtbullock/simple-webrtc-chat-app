@@ -1,12 +1,11 @@
 import React, {useState, useRef, useEffect} from 'react';
 import shortid from 'shortid';
-// import './App.css';
 import SignallingService from './services/SignallingService';
 import Login from './components/Login';
 import ChatSelector from './components/ChatSelector';
-import createRtcConnection from "./services/web-rtc/createRtcConnection";
 import handleOffer from "./services/web-rtc/handleOffer";
 import beginConnect from "./services/web-rtc/beginConnect";
+import Chat from "./components/Chat";
 
 const states = {
     NOT_LOGGED_IN: 'NOT_LOGGED_IN',
@@ -28,7 +27,6 @@ export default function App() {
     const [username, setUsername] = useState('');
     const [isSocketConnected, setIsSocketConnected] = useState(false);
     const [messages, setMessages] = useState([]);
-    const [message, setMessage] = useState('');
     const [chattingWithUsername, setChattingWithUsername] = useState('');
 
     const rtcOffer = useRef(null);
@@ -49,6 +47,7 @@ export default function App() {
 
             setChatState(states.OFFER_RECEIVED);
             rtcOffer.current = message;
+            setChattingWithUsername(message.name);
         });
 
     }, [chatState]);
@@ -97,11 +96,9 @@ export default function App() {
         });
     }
 
-    function sendMessage(e) {
-        e.preventDefault();
+    function handleMessageSend(message) {
         setMessages(prevState => [...prevState, {name: username, text: message, id: shortid.generate()}]);
         rtcConnectionData.current.rtcChannel.send(message);
-        setMessage('');
     }
 
     function handleLogin(loginUsername) {
@@ -116,51 +113,40 @@ export default function App() {
     }
 
     return (
-        <div>
-            <h1>Chat App</h1>
+        <div className="container mx-auto md:border rounded border-gray p-5 md:my-5 flex-grow flex flex-col overflow-hidden">
 
-            {chatState !== states.NOT_LOGGED_IN &&
-            <div>
-                Logged in as: {username}
-            </div>}
+            <h1 className="text-center text-xl mb-2">Chat App</h1>
 
             {chatState === states.NOT_LOGGED_IN && <Login onLogin={handleLogin}/>}
 
-            {chatState === states.NO_ACTIVE_CHAT && <ChatSelector onInviteToChat={inviteToChat}/>}
+            {chatState === states.NO_ACTIVE_CHAT && <ChatSelector username={username} onInviteToChat={inviteToChat}/>}
 
-            {chatState === states.SENDING_OFFER && <div>Waiting for acceptance...</div>}
+            {chatState === states.SENDING_OFFER && renderWaitingForResponse()}
 
             {chatState === states.OFFER_RECEIVED && renderOfferReceived()}
 
-            {chatState === states.CHAT_ACTIVE && renderChat()}
+            {chatState === states.CHAT_ACTIVE &&
+            <Chat messages={messages} chattingWithUsername={chattingWithUsername} onMessageSend={handleMessageSend}/>}
         </div>
     );
 
     function renderOfferReceived() {
         return (
             <div>
-                <p>You have a received an offer to chat. Would you like to accept?</p>
-                <button type="button" onClick={acceptChatOffer}>Accept</button>
+                <p className="mb-3"><span className="font-semibold">{chattingWithUsername}</span> has sent you a chat
+                    request. Would you like to accept?</p>
+                <button type="button" onClick={acceptChatOffer}
+                        className="block w-full rounded bg-blue-500 text-white p-2 text-xl">Accept
+                </button>
             </div>
         );
     }
 
-    function renderChat() {
+    function renderWaitingForResponse() {
         return (
-            <div>
-                <h3>Chat with {chattingWithUsername}</h3>
-
-                <form onSubmit={sendMessage}>
-                    <label htmlFor="message-text">
-                        Message:
-                        <input type="text" id="message-text" name="message-text"
-                               value={message} onChange={e => setMessage(e.target.value)}/>
-                        <button type="submit">Send</button>
-                    </label>
-                </form>
-
-                {messages.map(message => <div key={message.id}><strong>{message.name}</strong> {message.text}</div>)}
+            <div>Waiting for <span className="font-semibold">{chattingWithUsername}</span> to accept your invite...
             </div>
-        )
+        );
     }
+
 }
